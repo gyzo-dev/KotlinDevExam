@@ -168,7 +168,7 @@ class MainActivity : AppCompatActivity() {
         age: Int,
         gender: String
     ) {
-        val url = "https://run.mocky.io/v3/9f7825aa-65f0-4067-86fe-cb84cb169937"
+        val url = "https://run.mocky.io/v3/ed702c99-0ac2-4910-bfa4-0e73ca297aa5"
 
         val requestBody = JSONObject().apply {
             put("fullName", fullName)
@@ -184,12 +184,15 @@ class MainActivity : AppCompatActivity() {
                 val urlObject = URL(url)
                 val httpURLConnection = urlObject.openConnection() as HttpURLConnection
                 httpURLConnection.requestMethod = "POST"
-                httpURLConnection.setRequestProperty("Content-Type", "application/json")
+                httpURLConnection.setRequestProperty("Content-Type", "application/json; utf-8")
+                httpURLConnection.setRequestProperty("Accept", "application/json")
                 httpURLConnection.doOutput = true
 
-                val outputStreamWriter = OutputStreamWriter(httpURLConnection.outputStream)
-                outputStreamWriter.write(requestBody)
-                outputStreamWriter.flush()
+                OutputStreamWriter(httpURLConnection.outputStream).use {
+                    writer ->
+                    writer.write(requestBody)
+                    writer.flush()
+                }
 
                 val responseCode = httpURLConnection.responseCode
                 if (responseCode == HttpURLConnection.HTTP_OK) {
@@ -206,7 +209,6 @@ class MainActivity : AppCompatActivity() {
                     println("Error: $responseCode")
                 }
 
-                outputStreamWriter.close()
                 httpURLConnection.disconnect()
             } catch (e: Exception) {
                 e.printStackTrace()
