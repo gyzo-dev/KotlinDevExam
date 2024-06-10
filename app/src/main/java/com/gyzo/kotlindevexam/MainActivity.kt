@@ -174,7 +174,7 @@ class MainActivity : AppCompatActivity() {
         age: Int,
         gender: String
     ) {
-        val url = "https://run.mocky.io/v3/503bf7de-82bf-4239-978a-803015fd35bc"
+        val url = "https://6666ab29a2f8516ff7a45128.mockapi.io/fullName"
         val jsonObject = JSONObject().apply {
             put("fullName", fullName)
             put("emailAddress", email)
