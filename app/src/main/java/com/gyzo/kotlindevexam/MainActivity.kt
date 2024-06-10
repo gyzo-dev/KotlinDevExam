@@ -3,10 +3,8 @@ package com.gyzo.kotlindevexam
 import android.app.DatePickerDialog
 import android.os.Bundle
 import android.util.Patterns
-import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Button
-import android.widget.DatePicker
 import android.widget.EditText
 import android.widget.Spinner
 import android.widget.TextView
@@ -170,7 +168,17 @@ class MainActivity : AppCompatActivity() {
         age: Int,
         gender: String
     ) {
-        val url = "https://run.mocky.io/v3/c2875e3f-dce0-411a-b0f4-24974cce2b6e"
+        val url = "https://run.mocky.io/v3/9f7825aa-65f0-4067-86fe-cb84cb169937"
+
+        val requestBody = JSONObject().apply {
+            put("fullName", fullName)
+            put("emailAddress", email)
+            put("mobileNumber", mobileNumber)
+            put("dateOfBirth", dateOfBirth)
+            put("age", age)
+            put("gender", gender)
+        }.toString()
+
         val thread = Thread {
             try {
                 val urlObject = URL(url)
@@ -178,15 +186,6 @@ class MainActivity : AppCompatActivity() {
                 httpURLConnection.requestMethod = "POST"
                 httpURLConnection.setRequestProperty("Content-Type", "application/json")
                 httpURLConnection.doOutput = true
-
-                val requestBody = JSONObject().apply {
-                    put("fullName", fullName)
-                    put("emailAddress", email)
-                    put("mobileNumber", mobileNumber)
-                    put("dateOfBirth", dateOfBirth)
-                    put("age", age)
-                    put("gender", gender)
-                }.toString()
 
                 val outputStreamWriter = OutputStreamWriter(httpURLConnection.outputStream)
                 outputStreamWriter.write(requestBody)
