@@ -14,12 +14,15 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.widget.addTextChangedListener
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
-import java.io.BufferedReader
-import java.io.InputStreamReader
-import java.io.OutputStreamWriter
-import java.net.HttpURLConnection
-import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -27,6 +30,9 @@ import java.util.Locale
 private val genderOptions = arrayOf("Choose Gender", "Male", "Female", "Other")
 
 class MainActivity : AppCompatActivity() {
+
+    private val client = OkHttpClient()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -168,53 +174,108 @@ class MainActivity : AppCompatActivity() {
         age: Int,
         gender: String
     ) {
-        val url = "https://run.mocky.io/v3/ed702c99-0ac2-4910-bfa4-0e73ca297aa5"
-
-        val requestBody = JSONObject().apply {
+        val url = "https://run.mocky.io/v3/503bf7de-82bf-4239-978a-803015fd35bc"
+        val jsonObject = JSONObject().apply {
             put("fullName", fullName)
             put("emailAddress", email)
             put("mobileNumber", mobileNumber)
             put("dateOfBirth", dateOfBirth)
             put("age", age)
             put("gender", gender)
-        }.toString()
+        }
+        val jsonString = jsonObject.toString()
+        val mediaType = "application/json; charset=utf-8".toMediaType()
+        val requestBody = jsonString.toRequestBody(mediaType)
 
-        val thread = Thread {
+        val request = Request.Builder()
+            .url(url)
+            .post(requestBody)
+            .build()
+
+        CoroutineScope(Dispatchers.IO).launch {
             try {
-                val urlObject = URL(url)
-                val httpURLConnection = urlObject.openConnection() as HttpURLConnection
-                httpURLConnection.requestMethod = "POST"
-                httpURLConnection.setRequestProperty("Content-Type", "application/json; utf-8")
-                httpURLConnection.setRequestProperty("Accept", "application/json")
-                httpURLConnection.doOutput = true
-
-                OutputStreamWriter(httpURLConnection.outputStream).use {
-                    writer ->
-                    writer.write(requestBody)
-                    writer.flush()
-                }
-
-                val responseCode = httpURLConnection.responseCode
-                if (responseCode == HttpURLConnection.HTTP_OK) {
-                    val inputStream = httpURLConnection.inputStream
-                    val reader = BufferedReader(InputStreamReader(inputStream))
-                    val response = StringBuilder()
-                    var line: String?
-                    while (reader.readLine().also { line = it } != null) {
-                        response.append(line)
+                val response = client.newCall(request).execute()
+                if (response.isSuccessful) {
+                    val responseData = response.body?.string()
+                    withContext(context = Dispatchers.Main) {
+                        Toast.makeText(this@MainActivity, "Response: $responseData", Toast.LENGTH_SHORT).show()
                     }
-                    println("Response: $response")
-                    inputStream.close()
                 } else {
-                    println("Error: $responseCode")
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(this@MainActivity, "Error: ${response.code}", Toast.LENGTH_SHORT).show()
+                    }
                 }
-
-                httpURLConnection.disconnect()
             } catch (e: Exception) {
                 e.printStackTrace()
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@MainActivity, "Exception: ${e.message}", Toast.LENGTH_SHORT)
+                        .show()
+                }
             }
         }
-        thread.start()
+
+//    private fun sendFormData(
+//        fullName: String,
+//        email: String,
+//        mobileNumber: String,
+//        dateOfBirth: String,
+//        age: Int,
+//        gender: String
+//    ) {
+//        val url = "https://run.mocky.io/v3/ed702c99-0ac2-4910-bfa4-0e73ca297aa5"
+//
+//        val requestBody = JSONObject().apply {
+//            put("fullName", fullName)
+//            put("emailAddress", email)
+//            put("mobileNumber", mobileNumber)
+//            put("dateOfBirth", dateOfBirth)
+//            put("age", age)
+//            put("gender", gender)
+//        }.toString()
+//
+//        val request = Request.Builder()
+//            .url(url)
+//            .post(RequestBody.create(MediaType.parse("application/json"), requestBody))
+//
+//        val thread = Thread {
+//            try {
+//                val urlObject = URL(url)
+//                val httpURLConnection = urlObject.openConnection() as HttpURLConnection
+//                httpURLConnection.requestMethod = "POST"
+//                httpURLConnection.setRequestProperty("Content-Type", "application/json")
+//                httpURLConnection.setRequestProperty("Accept", "application/json")
+//                httpURLConnection.doOutput = true
+//
+//                val jsonInputString = """{"fullName": $fullName, "emailAddress": $email, "mobileNumber": $mobileNumber, "dateOfBirth": $dateOfBirth, "age": $age, "gender": $gender}"""
+//
+//                OutputStreamWriter(httpURLConnection.outputStream).use {
+//                    writer ->
+//                    writer.write(jsonInputString)
+//                    writer.flush()
+//                }
+//
+//                val responseCode = httpURLConnection.responseCode
+//                if (responseCode == HttpURLConnection.HTTP_OK) {
+//                    val inputStream = httpURLConnection.inputStream
+//                    val reader = BufferedReader(InputStreamReader(inputStream))
+//                    val response = StringBuilder()
+//                    var line: String?
+//                    while (reader.readLine().also { line = it } != null) {
+//                        response.append(line)
+//                    }
+//                    println("Response: $response")
+//                    inputStream.close()
+//                } else {
+//                    println("Error: $responseCode")
+//                }
+//
+//                httpURLConnection.disconnect()
+//            } catch (e: Exception) {
+//                e.printStackTrace()
+//            }
+//        }
+//        thread.start()
+//    }
     }
 }
 
